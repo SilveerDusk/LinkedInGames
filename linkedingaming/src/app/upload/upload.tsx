@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { IUser } from '@/database/userSchema';
 
 // Define a type for the server response
 interface UploadResponse {
@@ -9,7 +10,9 @@ interface UploadResponse {
 export default function Upload() {
   const [files, setFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<string>('');
-  const [results, setResults] = useState<string[][]>([[]]);
+  const [results, setResults] = useState<string[][]>([]);
+  const user: IUser = JSON.parse(localStorage.getItem('user') || '{}');
+  console.log('User:', user);
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,10 +49,30 @@ export default function Upload() {
       const data: UploadResponse = await response.json();
       
       // Ensure state updates are outside of render
-      console.log('Data:', data);
       setResults(data.results); 
-      console.log('Results:', data.results);
       setMessage('Files uploaded successfully');
+      results.forEach(result => async () => {
+        const gameData = {
+          game: result[0],
+          score: result[1],
+          user: user?._id || '',
+          name: user?.name || '',
+          day: new Date().toISOString().slice(0, 10)
+        }
+        const response = await fetch(`/api/game/${result[0]}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(gameData),
+        });
+        if (response.status === 201) {
+          const data = await response.json();
+          console.log('Game data created:' data.game);
+        } else {
+          console.log('Failed to create game data: ', response.status);
+        }
+      });
     } catch (error: unknown) {
       setMessage("Failed to upload files: " + (error as Error).message);
     }

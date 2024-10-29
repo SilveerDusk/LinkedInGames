@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 
 export type IUser = {
+  _id: string;
   name: string;
   email: string;
   verified: boolean;

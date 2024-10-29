@@ -49,8 +49,10 @@ const SignIn: React.FC = () => {
     if (response.status === 200) {
       router.push(`https://www.linkedin.com/oauth/v2/authorization?response_type=code&state=${state}&scope=openid%20profile%20email&client_id=${client_id}&redirect_uri=${redirect_url}`);
       if (searchParams.has('code') && searchParams.has('state') && searchParams.get('state') === state) {
-        console.log('verified');
         await verifyAccount();
+        const data = await response.json();
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('http://localhost:3000/upload');
       }
     }
   };
