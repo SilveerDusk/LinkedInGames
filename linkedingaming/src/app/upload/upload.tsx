@@ -31,6 +31,8 @@ export default function Upload() {
       formData.append('files', file);
     });
 
+    console.log('Files:', formData);
+
     try {
       const response = await fetch(`/api/upload`, {
         method: 'POST',
