@@ -1,17 +1,23 @@
 'use client';
-// pages/upload.js
 import { useState } from 'react';
+
+// Define a type for the server response
+interface UploadResponse {
+  results: string[][];
+}
 
 export default function Upload() {
   const [files, setFiles] = useState<File[]>([]);
-  const [message, setMessage] = useState('');
-  const [results, setResults] = useState<string[]>([]);
+  const [message, setMessage] = useState<string>('');
+  const [results, setResults] = useState<string[][]>([[]]);
 
+  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
     setFiles(selectedFiles);
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -20,26 +26,31 @@ export default function Upload() {
       return;
     }
 
-    console.log('Uploading files...: ', files);
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
 
-    /*
     try {
       const response = await fetch(`/api/upload`, {
         method: 'POST',
-        body: formData,
+        body: formData, // Sends the files as FormData
       });
 
       if (!response.ok) {
         throw new Error('Failed to upload files');
       }
 
-      const data = await response.json();
-      setResults(data.results);
+      const data: UploadResponse = await response.json();
+      
+      // Ensure state updates are outside of render
+      console.log('Data:', data);
+      setResults(data.results); 
+      console.log('Results:', data.results);
       setMessage('Files uploaded successfully');
-    } catch (error: any) {
-      setMessage(error.message);
+    } catch (error: unknown) {
+      setMessage("Failed to upload files: " + (error as Error).message);
     }
-    */
   };
 
   return (
@@ -48,8 +59,8 @@ export default function Upload() {
       <button type="submit">Upload</button>
       {message && <p>{message}</p>}
       <ul>
-        {results.map((result, index) => (
-          <li key={index}>{result}</li>
+        {results && results.map((result, index) => (
+          <li key={index}>Game: {result[0]} Time/Score: {result[1]}</li>
         ))}
       </ul>
     </form>

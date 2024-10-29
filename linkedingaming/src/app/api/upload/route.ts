@@ -1,66 +1,63 @@
 import { NextResponse } from 'next/server';
-import { IncomingForm } from 'formidable';
-import { exec } from 'child_process';
-import fs from 'fs';
+import { writeFile } from 'fs/promises';
 import path from 'path';
-import { Readable } from 'stream';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
-// Disable automatic body parsing by Next.js
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+const execPromise = promisify(exec);  // Convert exec to return a Promise
 
-// Helper function to convert Request to Node.js Readable stream
-function requestToReadableStream(req: Request): Readable {
-  const readableStream = new Readable();
-  readableStream._read = () => {}; // No-op
-  req.body?.getReader().read().then(({ done, value }) => {
-    if (done) readableStream.push(null); // No more data to push
-    else readableStream.push(value);
-  });
-  return readableStream;
-}
-
-// File upload handler
+// Handle POST requests
 export async function POST(req: Request) {
-  const uploadDir = path.join(process.cwd(), 'uploads');
+  try {
+    const formData = await req.formData();
+    const file = formData.get('files') as File;
 
-  // Ensure uploads directory exists
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+    if (!file) {
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+    }
 
-  // Convert the request into a Node.js Readable stream
-  const readableReq = requestToReadableStream(req);
+    // Save the file
+    const filePath = path.join(process.cwd(), '/uploads', file.name);
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    await writeFile(filePath, fileBuffer);
 
-  // Initialize formidable
-  const form = new IncomingForm({ uploadDir, keepExtensions: true });
+    // Path to Python script
+    const pythonScript = path.join(process.cwd(), 'getScore.py');
 
-  return new Promise((resolve, reject) => {
-    form.parse(readableReq, async (err: any, fields: any, files: any) => {
-      if (err) {
-        resolve(NextResponse.json({ message: 'Error parsing files' }, { status: 500 }));
-      }
+    // Call the Python script using exec wrapped in a Promise
+    const { stdout, stderr } = await execPromise(`python3 ${pythonScript} ${filePath}`);
 
-      const fileArray = Array.isArray(files.file) ? files.file : [files.file];
-
-      const results = await Promise.all(
-        fileArray.map((file: any) => {
-          return new Promise((resolve, reject) => {
-            exec(`python3 getScore.py ${file.filepath}`, (error, stdout, stderr) => {
-              if (error) {
-                reject(stderr);
-              } else {
-                resolve(stdout);
-              }
-            });
-          });
-        })
+    if (stderr) {
+      console.error('Error running Python script:', stderr);
+      return NextResponse.json(
+        { message: 'Error processing files' },
+        { status: 500 }
       );
+    }
 
-      resolve(NextResponse.json({ results }, { status: 200 }));
-    });
-  });
+    // Extract results using regex from Python script output
+    const regex = /\'(.*?)\'/g;
+    const match = stdout.match(regex);
+    const output = match ? match.map(m => m.slice(1, -1)) : [];
+
+    // Process and return the results
+    if (output.length === 0) {
+      return NextResponse.json({ message: 'No results found' });
+    } else if (output.length % 2 === 1) {
+      return NextResponse.json({ message: 'Error in processing files, please upload one at a time' });
+    } else {
+      const results: string[][] = [];
+      for (let i = 0; i < output.length; i += 2) {
+        results.push([output[i], output[i + 1]]);
+      }
+      return NextResponse.json({ results });
+    }
+
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return NextResponse.json(
+      { message: 'Error processing files' },
+      { status: 500 }
+    );
+  }
 }

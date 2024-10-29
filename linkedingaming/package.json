@@ -17,6 +17,7 @@
     "chakra": "^0.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "formidable": "^3.5.2",
     "framer-motion": "^11.11.10",
     "lucide-react": "^0.453.0",
     "mongoose": "^8.7.2",
@@ -27,6 +28,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/formidable": "^3.4.5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -1,6 +1,6 @@
 import connectDB from '@/database/db';
 import User, { IUser } from '@/database/userSchema';
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function POST(
   request: Request
@@ -55,13 +55,13 @@ export async function POST(
       }
     } catch (error) {
       return NextResponse.json(
-        { message: 'Failed to create the user' },
+        { message: 'Failed to create the user', error },
         { status: 505 }
       );
     }
   } catch (error) {
     return NextResponse.json(
-      { message: 'Failed to connect to the database' },
+      { message: 'Failed to connect to the database', error },
       { status: 404 }
     );
   }
