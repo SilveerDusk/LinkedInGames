@@ -1,5 +1,5 @@
 import connectDB from '@/database/db';
-import Game, { IGame } from '@/database/gameSchema';
+import Game from '@/database/gameSchema';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {

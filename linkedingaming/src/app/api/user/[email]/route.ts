@@ -1,5 +1,5 @@
 import connectDB from '@/database/db';
-import User, { IUser } from '@/database/userSchema';
+import User from '@/database/userSchema';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(
