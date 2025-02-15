@@ -1,18 +1,23 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IUser } from '@/database/userSchema';
 
 // Define a type for the server response
 interface UploadResponse {
   results: string[][];
+  message: string;
 }
 
 export default function Upload() {
   const [files, setFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<string>('');
   const [results, setResults] = useState<string[][]>([]);
-  const user: IUser = JSON.parse(localStorage.getItem('user') || '{}');
-  console.log('User:', user);
+  const [user, setUser] = useState<IUser | null>(null);
+  const lol = 'lol';
+
+  useEffect(() => {
+    setUser(JSON.parse(localStorage.getItem('user') || '{}'));
+  }, [lol]);
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,46 +52,50 @@ export default function Upload() {
       }
 
       const data: UploadResponse = await response.json();
-      
-      // Ensure state updates are outside of render
-      setResults(data.results); 
-      setMessage('Files uploaded successfully');
-      results.forEach(result => async () => {
+      console.log('Results:', data.results, data.message);
+      for (const result of data.results) {
         const gameData = {
-          game: result[0],
+          type: result[0],
           score: result[1],
           user: user?._id || '',
           name: user?.name || '',
-          day: new Date().toISOString().slice(0, 10)
-        }
-        const response = await fetch(`/api/game/${result[0]}`, {
+          date: new Date().toISOString().split('T')[0],
+        };
+        console.log('Game data:', gameData);
+        const response = await fetch(`/api/game/${gameData.type}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(gameData),
         });
-        if (response.status === 201) {
+        if (response.status === 200) {
           const data = await response.json();
-          console.log('Game data created:' data.game);
+          console.log('Game data created:', data.game, data.message);
+          setResults([...results, [data.game.type, data.game.score]]);
+          console.log('Results:', results);
         } else {
           console.log('Failed to create game data: ', response.status);
         }
-      });
+      }
     } catch (error: unknown) {
-      setMessage("Failed to upload files: " + (error as Error).message);
+      setMessage('Failed to upload files: ' + (error as Error).message);
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <input type="file" multiple onChange={handleFileChange} />
-      <button type="submit">Upload</button>
+      <button type="submit" style={{ backgroundColor: 'blue', color: 'white', padding: '5px 10px', borderRadius: '10px', cursor: "pointer" }}>Scan Image</button>
       {message && <p>{message}</p>}
-      <ul>
-        {results && results.map((result, index) => (
-          <li key={index}>Game: {result[0]} Time/Score: {result[1]}</li>
-        ))}
+      <ul style={{ listStyleType: 'none', padding: "10px 5px" }}>
+        {results &&
+          results.map((result, index) => (
+            <li key={index} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+              <p style={{ margin: "5px" }}>Game: {result[0]}</p>
+              <p style={{ margin: "5px" }}>Time/Score: {result[1]}</p>
+            </li>
+          ))}
       </ul>
     </form>
   );

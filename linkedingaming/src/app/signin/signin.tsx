@@ -11,6 +11,7 @@ const SignIn: React.FC = () => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
 
   const signIn = async () => {
     const response = await fetch(`/api/user/`, {
@@ -24,6 +25,11 @@ const SignIn: React.FC = () => {
       console.log('User created');
     } else {
       console.log('Failed to create user: ', response.status);
+      if (response) {
+        const data = await response.json();
+        console.log(data.message);
+        setError(data.message);
+      }
     }
     return response;
   }
@@ -45,26 +51,32 @@ const SignIn: React.FC = () => {
   }
 
   const handleSignIn = async () => {
-    const response = await signIn();
+    let response = await signIn();
     if (response.status === 200) {
-      router.push(`https://www.linkedin.com/oauth/v2/authorization?response_type=code&state=${state}&scope=openid%20profile%20email&client_id=${client_id}&redirect_uri=${redirect_url}`);
+      console.log(searchParams.has('code') && searchParams.has('state') && searchParams.get('state') === state)
       if (searchParams.has('code') && searchParams.has('state') && searchParams.get('state') === state) {
-        await verifyAccount();
+        response = await verifyAccount();
+        console.log(response);
         const data = await response.json();
         localStorage.setItem('user', JSON.stringify(data.user));
         router.push('http://localhost:3000/upload');
+      }
+      else {
+        setError('Failed to verify account');
+        router.push(`https://www.linkedin.com/oauth/v2/authorization?response_type=code&state=${state}&scope=openid%20profile%20email&client_id=${client_id}&redirect_uri=${redirect_url}`);
       }
     }
   };
 
   return (
-    <div>
-      <h1>Sign In</h1> 
-      <input type="text" placeholder='Name' onChange={(e) => setName(e.target.value)}></input> 
-      <input type="text" placeholder='Email' onChange={(e) => setEmail(e.target.value)}></input>
-      <button type="button" onClick={handleSignIn} style={{ backgroundColor: 'blue', color: 'white', padding: '10px 20px', borderRadius: '5px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+      <h1 style={{ }}>Sign In</h1> 
+      <input type="text" placeholder='Name' onChange={(e) => setName(e.target.value)} style={{margin: "5px", padding: "10px", borderWidth: "1px", borderColor: "black", borderRadius: "10px"}}></input> 
+      <input type="text" placeholder='Email' onChange={(e) => setEmail(e.target.value)} style={{margin: "5px", padding: "10px", borderWidth: "1px", borderColor: "black", borderRadius: "10px"}}></input>
+      <button type="button" onClick={handleSignIn} style={{ backgroundColor: 'blue', color: 'white', padding: '10px 20px', borderRadius: '10px' }}>
         Verify With LinkedIn
       </button>
+      {error && <p>{error}</p>}
     </div>
   );
 };

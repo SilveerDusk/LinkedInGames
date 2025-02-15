@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    let results: string[][] = [];
+    const results: string[][] = [];
     for (const file of files){
       // Save the file
       const filePath = path.join(process.cwd(), '/uploads', file.name);
@@ -55,8 +55,8 @@ export async function POST(req: Request) {
         }
       }
     }
-    console.log('Results:', results);
-    return NextResponse.json({ results });
+    console.log('Results: ', results);
+    return NextResponse.json({message: 'Success in finding score', results: results}, { status: 200 });
 
   } catch (error) {
     console.error('Error processing request:', error);
