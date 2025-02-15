@@ -37,7 +37,7 @@ export default function Leaderboard() {
 
   useEffect(() => {
     updateTodaysGames();
-  }, [selectedDate]);
+  });
   
 
   return (
