@@ -1,10 +1,10 @@
-import SignIn from "./signin/signin";
+import SignInPage from "./signin/signin";
 
 
 export default function Home() {
   return (
     <div>
-      <SignIn/>
+      <SignInPage/>
     </div>
   );
 }

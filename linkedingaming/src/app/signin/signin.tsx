@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const SignIn: React.FC = () => {
@@ -81,4 +81,10 @@ const SignIn: React.FC = () => {
   );
 };
 
-export default SignIn;
+const SignInPage: React.FC = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <SignIn />
+  </Suspense>
+);
+
+export default SignInPage;
