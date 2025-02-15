@@ -2,6 +2,7 @@ import cv2
 import pytesseract
 import os
 import re
+import sys
 
 def findTime(image_path):
   # Load the image using OpenCV
@@ -21,18 +22,19 @@ def findTime(image_path):
   matches = re.findall(pattern, extracted_text)
 
   if matches:
-      print("Time found:", matches)
+      print(matches)
+      return matches
   else:
       pattern = r"(?i)(pinpoint)[\s\S]*?(\d{1})"
       matches = re.findall(pattern, extracted_text)
       if matches:
-        print("Time found:", matches)
+        print(matches)
+        return matches
       else:
         print("Time not found in the image.")
+        return []
 
-# Loop through the files in the public folder
-public_folder = "./public"
-for filename in os.listdir(public_folder):
-  if filename.endswith(".jpeg") or filename.endswith(".jpg"):
-    image_path = os.path.join(public_folder, filename)
-    findTime(image_path)
+if __name__ == '__main__':
+    # Get the file paths from command-line arguments
+    for image_path in sys.argv[1:]:
+      findTime(image_path)

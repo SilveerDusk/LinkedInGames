@@ -1,1 +1,4 @@
 LinkedIn/
+.env
+node_modules/
+/public/*
