@@ -29,15 +29,12 @@ export default function Leaderboard() {
     }
   }
 
-  const updateTodaysGames = async () => {
-    const games = await getTodaysGames();
-    setTodaysGames(games);
-    console.log('Todays games:', games);
-  };
-
   useEffect(() => {
-    updateTodaysGames();
-  });
+    const games = getTodaysGames();
+    games.then((games) => {
+      setTodaysGames(games);
+    });
+  }, [selectedDate]);
   
 
   return (
